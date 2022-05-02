@@ -1,0 +1,90 @@
+﻿@page "/ProductorInsertar"
+@using Models
+@inject NavigationManager navigation
+
+<h3>Crear productor</h3>
+
+@if (productorModel == null)
+{
+    <div class="d-flex justify-content-center">
+        <div class="spinner-border" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </div>
+}
+else
+{
+    <EditForm Model="@productorModel" OnValidSubmit="CrearProductor">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Nombres</label>
+                    <InputText @bind-Value="productorModel.Nombres" class="form-control" required />
+                </div>
+                <div class="form-group">
+                    <label>Apellidos</label>
+                    <InputText @bind-Value="productorModel.Apellidos" class="form-control" required />
+                </div>
+                <div class="form-group">
+                    <label>Cedula</label>
+                    <InputText @bind-Value="productorModel.Cedula" class="form-control" required />
+                </div>
+                <div class="form-group">
+                    <label>Anio nacimiento</label>
+                    <InputDate @bind-Value="productorModel.AnioNacimiento" class="form-control" required />
+                </div>
+                <div class="form-group">
+                    <label>Genero</label>
+                    <InputSelect @bind-Value="productorModel.Genero" class="form-control">
+                        <option value="Femenino">Femenino</option>
+                        <option value="Masculino">Masculino</option>
+                    </InputSelect>
+                </div>
+                <div class="form-group">
+                    <input type="submit" class="btn btn-success" value="Crear productor" />
+                </div>
+            </div>
+        </div>
+    </EditForm>
+}
+
+@code {
+    ProductorModel productorModel = new();
+    HttpClient http = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        http.BaseAddress = new Uri("https://localhost:5001");
+    }
+
+    private async Task CrearProductor()
+    {
+        DateTime fechaActual = DateTime.Now.Date;
+        DateTime fechaNacimiento = productorModel.AnioNacimiento.Value;
+        int edad;
+
+        if (fechaActual.Month < fechaNacimiento.Month || (fechaActual.Month == fechaNacimiento.Month && fechaActual.Day < fechaNacimiento.Day))
+        {
+            edad = (fechaActual.Year - fechaNacimiento.Year) - 1;
+        }
+        else
+        {
+            edad = (fechaActual.Year - fechaNacimiento.Year);
+        }
+
+        productorModel.Edad = edad;
+
+        if (edad > 65)
+        {
+            productorModel.TipoEdad = "Mayor edad";
+        }
+        else
+        {
+            productorModel.TipoEdad = "Menor edad";
+        }
+
+        var response = await http.PostAsJsonAsync<ProductorModel>("/Api/Productor/Insertar", productorModel);
+
+        navigation.NavigateTo("/Principal");
+    }
+}
